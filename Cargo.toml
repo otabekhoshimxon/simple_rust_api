@@ -1,0 +1,37 @@
+# Package configuration for the simple_rust_api Rust project.
+# Specifies crate metadata including dependencies, target edition, and versioning.
+
+[package]
+name = "simple_rust_api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Web framework for building asynchronous HTTP APIs in Rust
+axum = "0.8.0"
+
+# Async runtime supplying event loop and multi-threading capabilities
+tokio = { version = "1.53.1", features = ["full"] }
+
+# Framework for serializing and deserializing Rust data structures (e.g., JSON)
+serde = { version = "1", features = ["derive"] }
+
+# Date and time library with Serde support for timestamp fields
+chrono = { version = "0.4.45", features = ["serde"] }
+
+# OpenAPI (v3) documentation generator for Rust code and handlers
+utoipa = { version = "5.3", features = ["axum_extras", "chrono"] }
+
+# Embedded Swagger UI web interface for testing and viewing generated OpenAPI docs
+utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
+
+# Application-level tracing and diagnostic framework
+tracing = "0.1"
+
+# Utilities for collecting and filtering structured tracing/logging output
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# HTTP-specific middleware for Axum, including request/response tracing
+tower-http = { version = "0.6", features = ["trace"] }
+
+http-body-util = "0.1"

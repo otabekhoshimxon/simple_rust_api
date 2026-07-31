@@ -1,0 +1,15 @@
+[Unit]
+Description=Simple Rust REST API
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/simple-rest-api
+ExecStart=/opt/simple-rest-api/simple_rust_api
+Restart=on-failure
+RestartSec=2
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
