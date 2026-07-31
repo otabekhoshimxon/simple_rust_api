@@ -9,7 +9,7 @@ env:
   BINARY_NAME: simple_rust_api
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,20 +21,6 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: binary
-          path: target/release/${{ env.BINARY_NAME }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: binary
-          path: ./artifact
-
       - name: Upload binary to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -42,9 +28,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "artifact/${{ env.BINARY_NAME }}"
+          source: "target/release/${{ env.BINARY_NAME }}"
           target: "/tmp/deploy"
-          strip_components: 1
+          strip_components: 2
 
       - name: Install binary and restart service
         uses: appleboy/ssh-action@v1.0.3
@@ -54,7 +40,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            sudo systemctl stop simple-rest-api
+            ls -la /tmp/deploy
+            sudo systemctl stop simple-rest-api || true
             sudo mv /tmp/deploy/${{ env.BINARY_NAME }} /opt/simple-rest-api/${{ env.BINARY_NAME }}
             sudo chmod +x /opt/simple-rest-api/${{ env.BINARY_NAME }}
             sudo systemctl start simple-rest-api
