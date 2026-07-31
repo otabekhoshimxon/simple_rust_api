@@ -122,26 +122,7 @@ curl -X DELETE http://localhost:3000/api/users/1
 
 ## 4. Deployment (GitHub Actions + systemd)
 
-`.github/workflows/deploy.yml` builds a release binary on every push to `master` and deploys it to a Linux (Ubuntu/Debian, x86_64) server over SSH, running it as a `systemd` service.
-
-### One-time server setup
-
-Run these once on the target server:
-
-```bash
-sudo useradd -r -s /usr/sbin/nologin deploy   # dedicated user to run the service
-sudo mkdir -p /opt/simple-rest-api
-sudo chown deploy:deploy /opt/simple-rest-api
-```
-
-Copy `deploy/simple-rest-api.service` from this repo to `/etc/systemd/system/simple-rest-api.service` on the server, then:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable simple-rest-api
-```
-
-The service expects the binary at `/opt/simple-rest-api/simple_rust_api` (the workflow uploads it there on deploy).
+`.github/workflows/deploy.yml` builds a release binary on every push to `master` and deploys it to a Linux (Ubuntu/Debian, x86_64) server over SSH, running it as a `systemd` service. The workflow is self-provisioning — it creates `/opt/simple-rest-api` and the `simple-rest-api.service` unit on the server itself if they don't exist yet, so no manual server setup is required beyond SSH access.
 
 ### Required GitHub Secrets
 
@@ -150,13 +131,16 @@ Set these under **Settings → Secrets and variables → Actions**:
 | Secret | Description |
 |---|---|
 | `SSH_HOST` | Server IP address or domain |
-| `SSH_USER` | SSH user with permission to run `sudo systemctl` and write to `/opt/simple-rest-api` (e.g. via passwordless sudo for these commands) |
+| `SSH_USER` | SSH user with passwordless `sudo` access (needed for `systemctl`, writing to `/opt/simple-rest-api` and `/etc/systemd/system`) |
 | `SSH_PRIVATE_KEY` | Private key matching a public key authorized on the server (`~/.ssh/authorized_keys`) |
 | `SSH_PORT` | *(optional)* SSH port, defaults to `22` |
 
 ### How it works
 
-1. **build** job compiles `cargo build --release` on `ubuntu-latest` and uploads the binary as an artifact.
-2. **deploy** job downloads the artifact, `scp`s it to `/tmp/deploy` on the server, then over SSH stops the service, moves the new binary into place, and restarts it.
+1. Compiles `cargo build --release` on `ubuntu-latest`.
+2. `scp`s the binary to `/tmp/deploy` on the server.
+3. Over SSH: creates the target directory and systemd unit if missing, reloads systemd, stops the service, moves the new binary into place, and restarts it.
 
 Trigger manually anytime via the **Actions** tab (`workflow_dispatch`), or it runs automatically on every push to `master`.
+
+`deploy/simple-rest-api.service` in this repo is kept as a reference copy of the unit file the workflow writes.

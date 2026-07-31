@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=deploy
+User=root
 WorkingDirectory=/opt/simple-rest-api
 ExecStart=/opt/simple-rest-api/simple_rust_api
 Restart=on-failure

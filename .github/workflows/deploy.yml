@@ -40,7 +40,29 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            ls -la /tmp/deploy
+            sudo mkdir -p /opt/simple-rest-api
+
+            sudo tee /etc/systemd/system/simple-rest-api.service > /dev/null <<'UNIT'
+            [Unit]
+            Description=Simple Rust REST API
+            After=network.target
+
+            [Service]
+            Type=simple
+            User=root
+            WorkingDirectory=/opt/simple-rest-api
+            ExecStart=/opt/simple-rest-api/${{ env.BINARY_NAME }}
+            Restart=on-failure
+            RestartSec=2
+            Environment=PORT=3000
+
+            [Install]
+            WantedBy=multi-user.target
+            UNIT
+
+            sudo systemctl daemon-reload
+            sudo systemctl enable simple-rest-api
+
             sudo systemctl stop simple-rest-api || true
             sudo mv /tmp/deploy/${{ env.BINARY_NAME }} /opt/simple-rest-api/${{ env.BINARY_NAME }}
             sudo chmod +x /opt/simple-rest-api/${{ env.BINARY_NAME }}
